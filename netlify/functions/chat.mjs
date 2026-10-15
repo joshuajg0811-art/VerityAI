@@ -5,7 +5,7 @@ const json = (obj, status) => new Response(JSON.stringify(obj), { status, header
 export default async (req) => {
   if (req.method !== "POST") return json({ error: { message: "Method not allowed" } }, 405);
   const key = Netlify.env.get("ANTHROPIC_API_KEY");
-  if (!key) return json({ error: { message: "The site is missing its API key." } }, 500);
+  const base = (Netlify.env.get("ANTHROPIC_BASE_URL") || "https://api.anthropic.com").replace(/\/+$/, "");
 
   let body;
   try {
@@ -40,7 +40,7 @@ export default async (req) => {
   }
   if (clean[clean.length - 1].role !== "user") return json({ error: { message: "Bad request." } }, 400);
 
-  const upstream = await fetch("https://api.anthropic.com/v1/messages", {
+  const upstream = await fetch(`${base}/v1/messages`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
     body: JSON.stringify({ model: MODEL, max_tokens: 1024, stream: true, system: SYSTEM, messages: clean }),
